@@ -1,5 +1,4 @@
 def main(n):
-    print(n, end=" ")
     if n in (1, 2):
         return 1
     else:
