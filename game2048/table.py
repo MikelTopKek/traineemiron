@@ -11,7 +11,7 @@ def dec1(func):
 
 """
 x,y - coordinates of the cell, into which we write a new number
-on start we put a number into a random cell
+on start we put a number into a random cell123
 """
 
 
