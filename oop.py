@@ -20,6 +20,7 @@ class A(C):
     def __method3(self):
         print("private", self.arg1)
 
+
 C = A
 
 a = C('3')
