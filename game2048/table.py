@@ -1,104 +1,147 @@
-import random
 import os
-from params import NUMBER_OF_COLUMN
+import random
+import time
+
+import params
 
 
 # Decorator for clear space
-def dec1(func):
+def decorator_clear(func):
     def clear(self):
         os.system('CLS')
         func(self)
     return clear
 
 
-def rand() -> int:
-    return random.randint(0, NUMBER_OF_COLUMN - 1)
+"""
+x,y - coordinates of the cell, into which we write a new number
+on start we put a number into a random cell
+"""
+
+class SomeCustomError(Exception):
+    pass
 
 
 class Table:
+    _max_score = 0
+
+    def rand(self) -> int:
+        return random.randint(0, int(params.get_numb()) - 1)
+
     def __init__(self):
         self.max_score = 0
-        self.table = [0] * NUMBER_OF_COLUMN
-        for i in range(NUMBER_OF_COLUMN):
-            self.table[i] = [0] * NUMBER_OF_COLUMN
+        self.table: list = [0] * int(params.get_numb())
+        for i in range(int(params.get_numb())):
+            self.table[i]: list = [0] * int(params.get_numb())
 
-    @dec1
+    @decorator_clear
     def display(self):
-        for i in range(NUMBER_OF_COLUMN):
-            for j in range(NUMBER_OF_COLUMN):
+        for i in range(int(params.get_numb())):
+            for j in range(int(params.get_numb())):
                 print(self.table[i][j], end=" ")
             print(end="\n")
         print(end="\n")
 
-    @dec1
+    @decorator_clear
     def start(self):
         self.max_score = 0
-        self.table[rand()][rand()] = 2**random.randint(1, 2)
+        self.table[self.rand()][self.rand()] = 2 ** random.randint(1, 2)
+        self.display()
 
     def return_max_score(self) -> int:
         return self.max_score
 
     def update_max_score(self, numb):
         self.max_score += numb
+        params.MAX_SCORE = self.max_score
 
-    def update_table(self):
-        # Insert into random cell number 2 or 4 with coordinates let_x and let_y
-        let_x = rand()
-        let_y = rand()
-        for i in range(NUMBER_OF_COLUMN - 1):
-            for j in range(NUMBER_OF_COLUMN):
+    @property
+    def max_score1(self):
+        return self._max_score
+
+    @max_score1.setter
+    def max_score1(self, value):
+        self._max_score += value
+        params.MAX_SCORE = self.max_score
+
+    @decorator_clear
+    def clear_table(self):
+        self.table = [0] * int(params.get_numb())
+        for i in range(int(params.get_numb())):
+            self.table[i] = [0] * int(params.get_numb())
+        self.start()
+
+    def table_has_free_space(self) -> bool:
+        for i in range(int(params.get_numb())):
+            for j in range(int(params.get_numb())):
                 if self.table[i][j] == 0:
-                    break
+                    # raise SomeCustomError()
+                    return True
+        return False
+
+    @decorator_clear
+    def update_table(self):
+        """ Insert into random cell number 2 or 4 with coordinates let_x and let_y """
+        let_x = self.rand()
+        let_y = self.rand()
+        try:
+            self.table_has_free_space()
+        except Exception as exc:
+            # raise ValueError() from exc
+            return
         while self.table[let_x][let_y] != 0:
-            let_x = rand()
-            let_y = rand()
+            let_x = self.rand()
+            let_y = self.rand()
         self.table[let_x][let_y] = 2**random.randint(1, 2)
 
-# Move table into different direction
-    def down(self):
-        for _ in range(NUMBER_OF_COLUMN):
-            for i in range(NUMBER_OF_COLUMN - 1):
-                for j in range(NUMBER_OF_COLUMN):
-                    if self.table[i+1][j] != 0 and self.table[i][j] != self.table[i+1][j]:
+    def check_status(self):
+        """ Checking status of the table, clear table and write your max score """
+        if not self.table_has_free_space():
+            if params.MAX_SCORE > self.return_max_score():
+                params.MAX_SCORE = self.return_max_score()
+            print("_" * 30)
+            print("Your max score is {score}".format(score=params.MAX_SCORE))
+            time.sleep(7)
+            params.NUMBER_OF_COLUMN = input("Write number of column:")
+            self.clear_table()
+
+    # Method for move numbers on table on different axes, take arguments which give info about the axes
+    def move(self, range_for, mark, mark2, direction):
+        coord_i = 0
+        coord_j = 0
+        for _ in range(int(params.get_numb())):
+            for i in range_for:
+                for j in range(int(params.get_numb())):
+                    if direction == "up/down":
+                        coord_i = i
+                        coord_j = j
+                    elif direction == "left/right":
+                        coord_i = j
+                        coord_j = i
+                    if self.table[coord_i+mark][coord_j+mark2] != 0 and \
+                            self.table[coord_i][coord_j] != self.table[coord_i+mark][coord_j+mark2]:
                         continue
-                    self.table[i+1][j] += self.table[i][j]
-                    self.update_max_score(self.table[i][j])
-                    self.table[i][j] = 0
+                    if self.table[coord_i][coord_j] == self.table[coord_i+mark][coord_j+mark2]:
+                        self.update_max_score(self.table[coord_i][coord_j])
+                    self.table[coord_i+mark][coord_j+mark2] += self.table[coord_i][coord_j]
+                    self.table[coord_i][coord_j] = 0
         self.update_table()
         self.display()
+        self.check_status()
+
+    # Move table into different direction
+    def down(self):
+        range_for_inspection = range(0, int(params.get_numb()) - 1, 1)
+        self.move(range_for_inspection, 1, 0, "up/down")
 
     def up(self):
-        for _ in range(NUMBER_OF_COLUMN):
-            for i in range(NUMBER_OF_COLUMN-1, 0, -1):
-                for j in range(NUMBER_OF_COLUMN):
-                    if self.table[i-1][j] != 0 and self.table[i][j] != self.table[i-1][j]:
-                        continue
-                    self.table[i-1][j] += self.table[i][j]
-                    self.update_max_score(self.table[i][j])
-                    self.table[i][j] = 0
-        self.update_table()
-        self.display()
+        range_for_inspection = range(int(params.get_numb()) - 1, 0, -1)
+        self.move(range_for_inspection, -1, 0, "up/down")
 
     def right(self):
-        for _ in range(NUMBER_OF_COLUMN):
-            for j in range(NUMBER_OF_COLUMN - 1):
-                for i in range(NUMBER_OF_COLUMN):
-                    if self.table[i][j+1] != 0 and self.table[i][j] != self.table[i][j+1]:
-                        continue
-                    self.table[i][j+1] += self.table[i][j]
-                    self.update_max_score(self.table[i][j])
-                    self.table[i][j] = 0
-        self.update_table()
-        self.display()
+        range_for_inspection = range(0, int(params.get_numb()) - 1, 1)
+        self.move(range_for_inspection, 0, 1, "left/right")
 
     def left(self):
-        for _ in range(NUMBER_OF_COLUMN):
-            for j in range(NUMBER_OF_COLUMN-1, 0, -1):
-                for i in range(NUMBER_OF_COLUMN):
-                    if self.table[i][j-1] != 0 and self.table[i][j] != self.table[i][j-1]:
-                        continue
-                    self.table[i][j-1] += self.table[i][j]
-                    self.update_max_score(self.table[i][j])
-                    self.table[i][j] = 0
-        self.update_table()
-        self.display()
+        range_for_inspection = range(int(params.get_numb()) - 1, 0, -1)
+        self.move(range_for_inspection, 0, -1, "left/right")
