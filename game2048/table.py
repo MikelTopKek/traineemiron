@@ -1,7 +1,8 @@
-import random
 import os
-import params
+import random
 import time
+
+import params
 
 
 # Decorator for clear space
@@ -17,17 +18,21 @@ x,y - coordinates of the cell, into which we write a new number
 on start we put a number into a random cell
 """
 
+class SomeCustomError(Exception):
+    pass
+
 
 class Table:
+    _max_score = 0
 
     def rand(self) -> int:
         return random.randint(0, int(params.get_numb()) - 1)
 
     def __init__(self):
         self.max_score = 0
-        self.table = [0] * int(params.get_numb())
+        self.table: list = [0] * int(params.get_numb())
         for i in range(int(params.get_numb())):
-            self.table[i] = [0] * int(params.get_numb())
+            self.table[i]: list = [0] * int(params.get_numb())
 
     @decorator_clear
     def display(self):
@@ -40,7 +45,7 @@ class Table:
     @decorator_clear
     def start(self):
         self.max_score = 0
-        self.table[self.rand()][self.rand()] = 2**random.randint(1, 2)
+        self.table[self.rand()][self.rand()] = 2 ** random.randint(1, 2)
         self.display()
 
     def return_max_score(self) -> int:
@@ -48,6 +53,15 @@ class Table:
 
     def update_max_score(self, numb):
         self.max_score += numb
+        params.MAX_SCORE = self.max_score
+
+    @property
+    def max_score1(self):
+        return self._max_score
+
+    @max_score1.setter
+    def max_score1(self, value):
+        self._max_score += value
         params.MAX_SCORE = self.max_score
 
     @decorator_clear
@@ -61,25 +75,27 @@ class Table:
         for i in range(int(params.get_numb())):
             for j in range(int(params.get_numb())):
                 if self.table[i][j] == 0:
+                    # raise SomeCustomError()
                     return True
         return False
 
     @decorator_clear
     def update_table(self):
-        # Insert into random cell number 2 or 4 with coordinates let_x and let_y
+        """ Insert into random cell number 2 or 4 with coordinates let_x and let_y """
         let_x = self.rand()
         let_y = self.rand()
         try:
             self.table_has_free_space()
-        except:
+        except Exception as exc:
+            # raise ValueError() from exc
             return
         while self.table[let_x][let_y] != 0:
             let_x = self.rand()
             let_y = self.rand()
         self.table[let_x][let_y] = 2**random.randint(1, 2)
 
-    # Checking status of the table, clear table and write your max score
     def check_status(self):
+        """ Checking status of the table, clear table and write your max score """
         if not self.table_has_free_space():
             if params.MAX_SCORE > self.return_max_score():
                 params.MAX_SCORE = self.return_max_score()
@@ -113,7 +129,7 @@ class Table:
         self.display()
         self.check_status()
 
-# Move table into different direction
+    # Move table into different direction
     def down(self):
         range_for_inspection = range(0, int(params.get_numb()) - 1, 1)
         self.move(range_for_inspection, 1, 0, "up/down")

@@ -53,6 +53,14 @@ class DB:
             """.format(table=table, l=limit, o=offset, status=status))
         return cls.cursor.fetchall()
 
+    @staticmethod
+    def something():
+        DB.update_link_status()
+
+    @classmethod
+    def someclsmethod(cls):
+        cls.update_link_status()
+
     @classmethod
     def update_link_status(cls, table, item):
         if cls.link == False:
@@ -65,3 +73,55 @@ class DB:
             "id": item.get("id")
         })
         cls.link.commit()
+
+
+DB.setConnection()
+
+
+from typing import List
+
+
+class Singletone:
+    _table: List[list] = None
+    _size: int = 0
+
+    @classmethod
+    def set_size(cls, size):
+        cls._size = size
+
+    @classmethod
+    def generate_table(cls):
+        # use somehow cls._size
+        cls._table = [[]]
+
+    @classmethod
+    def get_table(cls):
+        if not cls._table:
+            cls.generate_table()
+
+        return cls._table
+
+    @classmethod
+    def insert_value(cls, value, pos_x, pos_y):
+        ...
+        return cls._table
+
+
+class A:
+    def __init__(self, size):
+        Singletone.set_size(size)
+        Singletone.generate_table()
+
+    def m1(self):
+        Singletone.insert_value(1, 2, 3)
+
+
+class B:
+    def m2(self):
+        return Singletone.get_table()
+
+
+a = A(size=5)
+
+b = B()
+print(b.m2())
